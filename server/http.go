@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"log"
+	"net/http"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -49,7 +50,27 @@ func (s *HTTP) Start(ctx context.Context, bindTo string) {
 		})
 	}
 
-	g.Run(bindTo)
+	srv := &http.Server{
+		Addr:    bindTo,
+		Handler: g,
+	}
+
+	go func() {
+		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+			log.Fatalf("listen: %v\n", err)
+		}
+	}()
+
+	go func() {
+		select {
+		case <-ctx.Done():
+			defer func() { s.Done <- struct{}{} }()
+
+			if err := srv.Shutdown(ctx); err != nil {
+				log.Fatalf("server shutdown failed: %v", err)
+			}
+		}
+	}()
 }
 
 func (s *HTTP) Broadcast(msg string) {

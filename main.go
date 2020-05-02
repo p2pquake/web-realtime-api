@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/p2pquake/web-realtime-api/server"
@@ -20,6 +23,20 @@ func main() {
 		log.Fatal(err)
 	}
 
+	log.Println("Starting...")
+	ctx, cancel := context.WithCancel(context.Background())
+
 	s := server.HTTP{}
-	s.Start(context.Background(), config.BindTo)
+	s.Start(ctx, config.BindTo)
+
+	// wait terminate
+	quit := make(chan os.Signal)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("Exiting...")
+	cancel()
+	<-s.Done
+
+	log.Println("Bye!")
 }
