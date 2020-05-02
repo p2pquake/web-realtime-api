@@ -43,6 +43,10 @@ func (s *HTTP) Start(ctx context.Context, bindTo string) {
 		log.Printf("Message sent.\tAddr:%s\n", s.Request.RemoteAddr)
 	})
 
+	g.GET("/", func(c *gin.Context) {
+		c.String(200, "Hello world!")
+	})
+
 	v2 := g.Group("/v2")
 	{
 		v2.GET("/ws", func(c *gin.Context) {
