@@ -1,4 +1,4 @@
-package main
+package supplier
 
 import (
 	"context"
@@ -10,23 +10,23 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type Supplier struct {
-	DataCh chan bson.M
+type Mongo struct {
+	DataCh chan map[string]interface{}
 	Done   chan struct{}
 
 	context context.Context
 }
 
-func (s *Supplier) Start(context context.Context, uri string, database string, collection string) {
-	s.DataCh = make(chan bson.M, 256)
-	s.Done = make(chan struct{}, 1)
-	s.context = context
+func (m *Mongo) Start(context context.Context, uri string, database string, collection string) {
+	m.DataCh = make(chan map[string]interface{}, 256)
+	m.Done = make(chan struct{}, 1)
+	m.context = context
 
-	go s.run(uri, database, collection)
+	go m.run(uri, database, collection)
 }
 
-func (s *Supplier) run(uri string, db string, c string) {
-	defer func() { s.Done <- struct{}{} }()
+func (m *Mongo) run(uri string, db string, c string) {
+	defer func() { m.Done <- struct{}{} }()
 
 	op := options.Client().ApplyURI(uri)
 	client, err := mongo.NewClient(op)
@@ -41,16 +41,11 @@ func (s *Supplier) run(uri string, db string, c string) {
 	defer client.Disconnect(ctx)
 
 	col := client.Database(db).Collection(c)
-
 	ct := options.TailableAwait
 	wait := time.Duration(1)
 	options := options.FindOptions{CursorType: &ct, MaxAwaitTime: &wait}
 	filter := bson.D{}
-
-	var cur *mongo.Cursor
-	defer cur.Close(ctx)
-
-	cur, err = col.Find(ctx, filter, &options)
+	cur, err := col.Find(context.Background(), filter, &options)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -59,7 +54,7 @@ func (s *Supplier) run(uri string, db string, c string) {
 	initial := true
 	for {
 		select {
-		case <-s.context.Done():
+		case <-m.context.Done():
 			log.Printf("Stopping tail due to context cancellation")
 			break
 		default:
@@ -71,7 +66,7 @@ func (s *Supplier) run(uri string, db string, c string) {
 				log.Fatal(err)
 			}
 			if !initial {
-				s.DataCh <- result
+				m.DataCh <- result
 			}
 			continue
 		} else {

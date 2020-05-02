@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"os"
 	"os/signal"
@@ -9,11 +10,15 @@ import (
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/p2pquake/web-realtime-api/server"
+	"github.com/p2pquake/web-realtime-api/supplier"
 )
 
 type Config struct {
-	APIKey string `envconfig:"api_key" required:"true"`
-	BindTo string `envconfig:"bind_to" required:"true"`
+	APIKey          string `envconfig:"api_key" required:"true"`
+	BindTo          string `envconfig:"bind_to" required:"true"`
+	MongoURI        string `envconfig:"mongo_uri" required:"true"`
+	MongoDatabase   string `envconfig:"mongo_database" required:"true"`
+	MongoCollection string `envconfig:"mongo_collection" required:"true"`
 }
 
 func main() {
@@ -26,17 +31,33 @@ func main() {
 	log.Println("Starting...")
 	ctx, cancel := context.WithCancel(context.Background())
 
+	m := supplier.Mongo{}
+	m.Start(ctx, config.MongoURI, config.MongoDatabase, config.MongoCollection)
+
 	s := server.HTTP{}
 	s.Start(ctx, config.BindTo)
 
-	// wait terminate
 	quit := make(chan os.Signal)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
+
+L:
+	for {
+		select {
+		case d := <-m.DataCh:
+			json, err := json.Marshal(d)
+			if err != nil {
+				log.Printf("bson marshal error: %v\n", err)
+			} else {
+				log.Printf("broadcasting %s\n", string(json))
+				s.Broadcast(string(json))
+			}
+		case <-quit:
+			break L
+		}
+	}
 
 	log.Println("Exiting...")
 	cancel()
 	<-s.Done
-
 	log.Println("Bye!")
 }
