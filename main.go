@@ -52,7 +52,7 @@ L:
 
 			json, err := json.Marshal(d)
 			if err != nil {
-				log.Printf("bson marshal error: %v\n", err)
+				log.Printf("marshal error: %v\n", err)
 				break
 			}
 
