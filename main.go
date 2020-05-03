@@ -9,16 +9,18 @@ import (
 	"syscall"
 
 	"github.com/kelseyhightower/envconfig"
+	"github.com/p2pquake/web-realtime-api/selector"
 	"github.com/p2pquake/web-realtime-api/server"
 	"github.com/p2pquake/web-realtime-api/supplier"
 )
 
 type Config struct {
-	APIKey          string `envconfig:"api_key" required:"true"`
-	BindTo          string `envconfig:"bind_to" required:"true"`
-	MongoURI        string `envconfig:"mongo_uri" required:"true"`
-	MongoDatabase   string `envconfig:"mongo_database" required:"true"`
-	MongoCollection string `envconfig:"mongo_collection" required:"true"`
+	APIKey          string  `envconfig:"api_key" required:"true"`
+	BindTo          string  `envconfig:"bind_to" required:"true"`
+	BroadcastCodes  []int64 `envconfig:"broadcast_codes" required:"true"`
+	MongoURI        string  `envconfig:"mongo_uri" required:"true"`
+	MongoDatabase   string  `envconfig:"mongo_database" required:"true"`
+	MongoCollection string  `envconfig:"mongo_collection" required:"true"`
 }
 
 func main() {
@@ -44,13 +46,18 @@ L:
 	for {
 		select {
 		case d := <-m.DataCh:
+			if !selector.NeedsBroadcast(d, config.BroadcastCodes) {
+				break
+			}
+
 			json, err := json.Marshal(d)
 			if err != nil {
 				log.Printf("bson marshal error: %v\n", err)
-			} else {
-				log.Printf("broadcasting %s\n", string(json))
-				s.Broadcast(string(json))
+				break
 			}
+
+			log.Printf("broadcasting %s\n", string(json))
+			s.Broadcast(string(json))
 		case <-quit:
 			break L
 		}
