@@ -15,7 +15,6 @@ import (
 )
 
 type Config struct {
-	APIKey          string  `envconfig:"api_key" required:"true"`
 	BindTo          string  `envconfig:"bind_to" required:"true"`
 	BroadcastCodes  []int64 `envconfig:"broadcast_codes" required:"true"`
 	MongoURI        string  `envconfig:"mongo_uri" required:"true"`
