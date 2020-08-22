@@ -44,8 +44,8 @@ func (m *Mongo) run(uri string, db string, c string) {
 	ct := options.TailableAwait
 	wait := time.Duration(1)
 	options := options.FindOptions{CursorType: &ct, MaxAwaitTime: &wait}
-	filter := bson.D{}
-	cur, err := col.Find(context.Background(), filter, &options)
+	filters := bson.D{{Key: "code", Value: bson.D{{Key: "$nin", Value: bson.A{5510, 5511}}}}}
+	cur, err := col.Find(context.Background(), filters, &options)
 	if err != nil {
 		log.Fatal(err)
 	}
