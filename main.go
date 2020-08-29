@@ -9,17 +9,15 @@ import (
 	"syscall"
 
 	"github.com/kelseyhightower/envconfig"
-	"github.com/p2pquake/web-realtime-api/selector"
 	"github.com/p2pquake/web-realtime-api/server"
 	"github.com/p2pquake/web-realtime-api/supplier"
 )
 
 type Config struct {
-	BindTo          string  `envconfig:"bind_to" required:"true"`
-	BroadcastCodes  []int64 `envconfig:"broadcast_codes" required:"true"`
-	MongoURI        string  `envconfig:"mongo_uri" required:"true"`
-	MongoDatabase   string  `envconfig:"mongo_database" required:"true"`
-	MongoCollection string  `envconfig:"mongo_collection" required:"true"`
+	BindTo          string `envconfig:"bind_to" required:"true"`
+	MongoURI        string `envconfig:"mongo_uri" required:"true"`
+	MongoDatabase   string `envconfig:"mongo_database" required:"true"`
+	MongoCollection string `envconfig:"mongo_collection" required:"true"`
 }
 
 func main() {
@@ -45,10 +43,6 @@ L:
 	for {
 		select {
 		case d := <-m.DataCh:
-			if !selector.NeedsBroadcast(d, config.BroadcastCodes) {
-				break
-			}
-
 			json, err := json.Marshal(d)
 			if err != nil {
 				log.Printf("marshal error: %v\n", err)
