@@ -28,7 +28,7 @@ func (s *HTTP) Start(ctx context.Context, bindTo string) {
 	s.m = m
 
 	m.HandleConnect(func(s *melody.Session) {
-		log.Printf("Connection established.\tAddr:%s\tUser-Agent:%s\n", s.Request.RemoteAddr, s.Request.Header["User-Agent"])
+		log.Printf("Connection established.\tAddr:%s\tX-Real-Ip:%s\tUser-Agent:%s\n", s.Request.RemoteAddr, s.Request.Header["X-Real-Ip"], s.Request.Header["User-Agent"])
 	})
 
 	m.HandleDisconnect(func(s *melody.Session) {
