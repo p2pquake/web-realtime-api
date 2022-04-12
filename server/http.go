@@ -52,6 +52,9 @@ func (s *HTTP) Start(ctx context.Context, bindTo string) {
 		v2.GET("/ws", func(c *gin.Context) {
 			m.HandleRequest(c.Writer, c.Request)
 		})
+		v2.GET("/ws_healthcheck", func(c *gin.Context) {
+			c.String(http.StatusOK, "OK")
+		})
 	}
 
 	srv := &http.Server{
