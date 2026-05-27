@@ -106,7 +106,7 @@ func (s *HTTP) Start(ctx context.Context, bindTo string) {
 				s.mu.Lock()
 				for ip, count := range s.ipCount {
 					if count >= 2 {
-						fmt.Printf("IP connections:\t%s\t%d\n", ip, count)
+						fmt.Printf("[IPAddressStat] IP connections:\t%s\t%d\n", ip, count)
 					}
 				}
 				s.mu.Unlock()
