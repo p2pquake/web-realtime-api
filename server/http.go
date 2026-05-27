@@ -53,7 +53,7 @@ func (s *HTTP) Start(ctx context.Context, bindTo string) {
 		s.mu.Lock()
 		s.ipCount[ip]++
 		s.mu.Unlock()
-		log.Printf("Connection established.\tAddr:%s\tX-Real-Ip:%s\tUser-Agent:%s\n", sess.Request.RemoteAddr, sess.Request.Header["X-Real-Ip"], sess.Request.Header["User-Agent"])
+		log.Printf("Connection established.\tAddr:%s\tUser-Agent:%s\n", ip, sess.Request.Header["User-Agent"])
 	})
 
 	m.HandleDisconnect(func(sess *melody.Session) {
@@ -64,15 +64,15 @@ func (s *HTTP) Start(ctx context.Context, bindTo string) {
 			delete(s.ipCount, ip)
 		}
 		s.mu.Unlock()
-		log.Printf("Connection closed.\tAddr:%s\n", sess.Request.RemoteAddr)
+		log.Printf("Connection closed.\tAddr:%s\n", ip)
 	})
 
 	m.HandleError(func(sess *melody.Session, e error) {
-		log.Printf("Error occured.\tAddr:%s\tError:%#v\n", sess.Request.RemoteAddr, e)
+		log.Printf("Error occured.\tAddr:%s\tError:%#v\n", getIP(sess), e)
 	})
 
 	m.HandleSentMessage(func(sess *melody.Session, b []byte) {
-		log.Printf("Message sent.\tAddr:%s\n", sess.Request.RemoteAddr)
+		log.Printf("Message sent.\tAddr:%s\n", getIP(sess))
 	})
 
 	g.GET("/", func(c *gin.Context) {
