@@ -24,6 +24,9 @@ type HTTP struct {
 }
 
 func getIP(s *melody.Session) string {
+	if cfIP := s.Request.Header.Get("CF-Connecting-IP"); cfIP != "" {
+		return cfIP
+	}
 	if realIP := s.Request.Header.Get("X-Real-Ip"); realIP != "" {
 		return realIP
 	}
