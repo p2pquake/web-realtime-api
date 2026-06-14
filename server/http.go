@@ -79,10 +79,10 @@ func (s *HTTP) Start(ctx context.Context, bindTo string) {
 
 			s.ipMu.Lock()
 			if s.ipConnections[ip] >= maxConnectionsPerIP {
-				// s.ipMu.Unlock()
-				log.Printf("Connection rejected (too many connections) [DRY-RUN].\tIP:%s\n", ip)
-				// c.Status(http.StatusTooManyRequests)
-				// return
+				s.ipMu.Unlock()
+				log.Printf("Connection rejected (too many connections).\tIP:%s\n", ip)
+				c.Status(http.StatusTooManyRequests)
+				return
 			}
 			s.ipConnections[ip]++
 			s.ipMu.Unlock()
